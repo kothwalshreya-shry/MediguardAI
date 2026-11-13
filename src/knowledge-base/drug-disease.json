@@ -1,0 +1,13 @@
+﻿[
+  {
+    "id": "DSD-001",
+    "type": "Drug–disease interaction",
+    "severity": "Caution",
+    "drugs": ["ibuprofen"],
+    "conditions": ["chronic kidney disease"],
+    "title": "Potential kidney-related medication risk",
+    "why": "Ibuprofen is an NSAID that may worsen kidney function in people with chronic kidney disease.",
+    "review": "A qualified clinician or pharmacist should review kidney function, medical history and medication before use. This prototype rule requires clinical validation.",
+    "source": "National Kidney Foundation, Pain Medicines and Kidney Disease: https://www.kidney.org/kidney-topics/pain-medicines-and-kidney-disease"
+  }
+]

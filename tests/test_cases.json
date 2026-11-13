@@ -1,0 +1,263 @@
+
+[
+  {
+    "testId": "TC-001",
+    "description": "Positive drug interaction: warfarin and ibuprofen",
+    "patient": {
+      "id": "P001",
+      "name": "Alex Morgan",
+      "age": 67,
+      "sex": "Female",
+      "conditions": ["Atrial fibrillation", "Hypertension"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "warfarin",
+          "dose": "5mg",
+          "frequency": "once daily"
+        },
+        {
+          "name": "ibuprofen",
+          "dose": "400mg",
+          "frequency": "as needed"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DDI-001",
+      "trigger": true,
+      "severity": "Caution",
+      "reason": "The patient takes warfarin and ibuprofen together."
+    }
+  },
+  {
+    "testId": "TC-002",
+    "description": "Negative drug interaction: warfarin alone",
+    "patient": {
+      "id": "P002",
+      "name": "Jordan Lee",
+      "age": 55,
+      "sex": "Male",
+      "conditions": ["Atrial fibrillation"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "warfarin",
+          "dose": "5mg",
+          "frequency": "once daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DDI-001",
+      "trigger": false,
+      "severity": null,
+      "reason": "Ibuprofen is not present in the medication list."
+    }
+  },
+  {
+    "testId": "TC-003",
+    "description": "Positive allergy conflict: amoxicillin and penicillin allergy",
+    "patient": {
+      "id": "P003",
+      "name": "Taylor Smith",
+      "age": 34,
+      "sex": "Female",
+      "conditions": ["Sinus infection"],
+      "allergies": ["Penicillin"],
+      "medications": [
+        {
+          "name": "amoxicillin",
+          "dose": "500mg",
+          "frequency": "three times daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "ALG-001",
+      "trigger": true,
+      "severity": "High Risk",
+      "reason": "Amoxicillin is a penicillin-class antibiotic and the patient has a recorded penicillin allergy. The prototype rule does not verify allergy reaction history."
+    }
+  },
+  {
+    "testId": "TC-004",
+    "description": "Negative allergy conflict: no recorded penicillin allergy",
+    "patient": {
+      "id": "P004",
+      "name": "Casey Brown",
+      "age": 42,
+      "sex": "Male",
+      "conditions": ["Sinus infection"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "amoxicillin",
+          "dose": "500mg",
+          "frequency": "three times daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "ALG-001",
+      "trigger": false,
+      "severity": null,
+      "reason": "No penicillin allergy is recorded."
+    }
+  },
+  {
+    "testId": "TC-005",
+    "description": "Positive duplicate therapy: ibuprofen and naproxen",
+    "patient": {
+      "id": "P005",
+      "name": "Morgan Davis",
+      "age": 59,
+      "sex": "Female",
+      "conditions": ["Joint pain"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "ibuprofen",
+          "dose": "400mg",
+          "frequency": "as needed"
+        },
+        {
+          "name": "naproxen",
+          "dose": "250mg",
+          "frequency": "twice daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DUP-001",
+      "trigger": true,
+      "severity": "Moderate",
+      "reason": "Both ibuprofen and naproxen are present in the medication list."
+    }
+  },
+  {
+    "testId": "TC-006",
+    "description": "Negative duplicate therapy: ibuprofen alone",
+    "patient": {
+      "id": "P006",
+      "name": "Riley Wilson",
+      "age": 48,
+      "sex": "Male",
+      "conditions": ["Muscle pain"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "ibuprofen",
+          "dose": "200mg",
+          "frequency": "as needed"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DUP-001",
+      "trigger": false,
+      "severity": null,
+      "reason": "Naproxen is not present in the medication list."
+    }
+  },
+  {
+    "testId": "TC-007",
+    "description": "Positive drug-disease conflict: ibuprofen and chronic kidney disease",
+    "patient": {
+      "id": "P007",
+      "name": "Jamie Wilson",
+      "age": 70,
+      "sex": "Male",
+      "conditions": ["Chronic kidney disease"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "ibuprofen",
+          "dose": "200mg",
+          "frequency": "as needed"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DSD-001",
+      "trigger": true,
+      "severity": "Caution",
+      "reason": "The patient has chronic kidney disease and takes ibuprofen. This is an illustrative prototype rule requiring clinical validation."
+    }
+  },
+  {
+    "testId": "TC-008",
+    "description": "Negative drug-disease conflict: ibuprofen without chronic kidney disease",
+    "patient": {
+      "id": "P008",
+      "name": "Avery Clark",
+      "age": 45,
+      "sex": "Female",
+      "conditions": ["Hypertension"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "ibuprofen",
+          "dose": "200mg",
+          "frequency": "as needed"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DSD-001",
+      "trigger": false,
+      "severity": null,
+      "reason": "Chronic kidney disease is not listed among the patient's conditions."
+    }
+  },
+  {
+    "testId": "TC-009",
+    "description": "Positive dosage check: acetaminophen dose above demo threshold",
+    "patient": {
+      "id": "P009",
+      "name": "Drew Miller",
+      "age": 38,
+      "sex": "Male",
+      "conditions": ["Headache"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "acetaminophen",
+          "dose": "3500mg",
+          "frequency": "once daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DOD-001",
+      "trigger": true,
+      "severity": "Moderate",
+      "reason": "The parsed dose of 3500mg exceeds the engine's illustrative 3000mg demo threshold. This is not a clinically validated prescribing limit."
+    }
+  },
+  {
+    "testId": "TC-010",
+    "description": "Negative dosage check: acetaminophen dose below demo threshold",
+    "patient": {
+      "id": "P010",
+      "name": "Quinn Taylor",
+      "age": 29,
+      "sex": "Female",
+      "conditions": ["Headache"],
+      "allergies": ["None recorded"],
+      "medications": [
+        {
+          "name": "acetaminophen",
+          "dose": "500mg",
+          "frequency": "once daily"
+        }
+      ]
+    },
+    "expected": {
+      "ruleId": "DOD-001",
+      "trigger": false,
+      "severity": null,
+      "reason": "The parsed dose of 500mg is below the illustrative 3000mg demo threshold."
+    }
+  }
+]

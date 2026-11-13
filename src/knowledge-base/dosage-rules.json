@@ -1,0 +1,13 @@
+﻿[
+  {
+    "id": "DOD-001",
+    "type": "Dosage check",
+    "severity": "Moderate",
+    "drugs": ["acetaminophen"],
+    "maxDoseMg": 3000,
+    "title": "Acetaminophen dosage threshold exceeded",
+    "why": "The entered acetaminophen dose exceeds the configured 3000 mg threshold in this demonstration rule. This threshold is illustrative only and is not a clinically validated dosing recommendation. Actual safe dosing depends on patient-specific factors and total exposure from all medicines containing acetaminophen.",
+    "review": "A qualified clinician or pharmacist should verify the dose, frequency, total daily acetaminophen exposure, other medicines and patient-specific risk factors. Do not use this prototype threshold to make prescribing decisions.",
+    "source": "MediGuard AI demonstration rule DOD-001. The 3000 mg threshold is illustrative and requires clinical validation against current authoritative prescribing references before any clinical use."
+  }
+]
