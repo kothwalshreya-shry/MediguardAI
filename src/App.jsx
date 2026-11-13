@@ -79,9 +79,7 @@ export default function App() {
     const current = patient[key] || [];
     updateField(key, current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
   };
-  const runAnalysis = () => {
-    
-const runAnalysis = async () => {
+  const runAnalysis = async () => {
   if (
     !patient.name.trim() ||
     !patient.age ||
@@ -114,8 +112,7 @@ const runAnalysis = async () => {
 
   // Save patient and analysis to the backend
   try {
-    await api.savePatient(clean);
-    await api.saveAnalysis(clean, next);
+    await api.saveAnalysis(next);
 
     notify("Analysis completed and saved successfully!");
   } catch (error) {
@@ -123,7 +120,6 @@ const runAnalysis = async () => {
     notify("Analysis completed locally, but backend saving failed: " + error.message);
   }
 };
-  };
   const startDemo = () => {
     setShowDemo(true); setDemoStep(0);
     const scenario = JSON.parse(JSON.stringify(demoPatients[0]));
@@ -166,7 +162,7 @@ const runAnalysis = async () => {
       </button>)}</div>
       <div className="sidebar-bottom">
         <div className="sidebar-help"><div className="help-icon"><Sparkles size={17}/></div><b>Hackathon demo</b><p>Explore the sample patient scenarios and explainable alerts.</p><button onClick={startDemo}>Start guided demo <ArrowRight size={14}/></button></div>
-        <div className="team-mini"><div className="team-avatar">DR</div><div><b>DRisk AI</b><small>INNOVASIA 2K26</small></div><span className="online-dot"/></div>
+        <div className="team-mini"><div className="team-avatar">MediGuard AI</div><div><b> AI</b><small>INNOVASIA 2K26</small></div><span className="online-dot"/></div>
       </div>
     </aside>
 
@@ -186,7 +182,7 @@ const runAnalysis = async () => {
           {page === "architecture" && <ArchitecturePage/>}
         </motion.div>
       </AnimatePresence>
-      <footer className="main-footer"><span>© 2026 MediGuard AI · Built by <b>Team DRisk AI</b></span><span>INNOVASIA 2K26 <i/> Healthcare + AI</span></footer>
+      <footer className="main-footer"><span>© 2026 MediGuard AI · Built by <b>Team MediGuard AI</b></span><span>INNOVASIA 2K26 <i/> Healthcare + AI</span></footer>
     </main>
 
     {showDemo && <div className="demo-banner"><div className="demo-banner-icon"><Sparkles size={17}/></div><div><b>Guided demo · Step {Math.min(demoStep + 1, 5)} of 5</b><small>{["Load the sample patient profile","Review the medication profile","Run the safety analysis","Explore explainable findings","Open the generated report"][Math.min(demoStep, 4)]}</small></div><div className="demo-progress"><span style={{ width: `${(demoStep + 1) * 20}%` }}/></div><button className="btn btn-primary btn-small" onClick={advanceDemo}>{demoStep === 4 ? "Finish demo" : demoStep === 1 ? "Analyze now" : "Continue"} <ArrowRight size={14}/></button><button className="icon-btn" onClick={() => setShowDemo(false)}><X size={16}/></button></div>}
@@ -196,7 +192,7 @@ const runAnalysis = async () => {
 
 function Dashboard({ go, loadScenario, history, stats, pieData, chartData }) {
   return <div className="page-stack">
-    <div className="welcome-row"><div><div className="eyebrow">THURSDAY, NOVEMBER 12, 2026 <span className="live-dot"/></div><h1>Good afternoon, <span>DRisk AI</span></h1><p>Here’s your medication safety intelligence at a glance.</p></div><button className="btn btn-primary" onClick={() => go("analysis")}><Plus size={17}/> New analysis</button></div>
+    <div className="welcome-row"><div><div className="eyebrow">THURSDAY, NOVEMBER 12, 2026 <span className="live-dot"/></div><h1>Good afternoon, <span>MediGuard AI</span></h1><p>Here’s your medication safety intelligence at a glance.</p></div><button className="btn btn-primary" onClick={() => go("analysis")}><Plus size={17}/> New analysis</button></div>
     <Disclaimer/>
     <div className="stats-grid">
       <StatCard icon={Users} label="Patients analyzed" value="1,284" change="+12.8%" tone="purple"/>
@@ -332,7 +328,7 @@ function ReportsPage({ result, history, patient }) {
       <h3>Medication list</h3><table className="report-table"><thead><tr><th>Medication</th><th>Dose entered</th><th>Frequency</th></tr></thead><tbody>{active.patient.medications.map((m,i)=><tr key={i}><td>{m.name}</td><td>{m.dose || "Not entered"}</td><td>{m.frequency}</td></tr>)}</tbody></table>
       <h3>Findings and professional review</h3>{active.findings.length ? active.findings.map(f=><div className="report-finding" key={f.id}><div><b>{f.title}</b><Severity value={f.severity}/></div><small>{f.type} · {f.id} · {f.involved}</small><p>{f.why}</p><p><b>Review:</b> {f.review}</p></div>) : <div className="report-clear">No potential conflicts identified by the current demo rule set. This is not a guarantee of clinical safety.</div>}
       <div className="report-disclaimer"><b>Important limitation</b><p>This is a demonstration decision-support prototype using a limited illustrative rule set. It is not clinically validated, may miss relevant risks and must not be used to make medical decisions. A qualified healthcare professional must independently review the patient's complete clinical context.</p></div>
-      <div className="report-footer">MediGuard AI · Built by Team DRisk AI · INNOVASIA 2K26</div>
+      <div className="report-footer">MediGuard AI · Built by Team MediGuard AI 2K26</div>
     </div>}
     {history.length > 1 && <div className="card recent-card"><div className="card-heading"><div><h3>Previous local sessions</h3><p>Recent analyses stored for this browser session.</p></div></div>{history.slice(1).map((h,i)=><div className="history-row" key={i}><div className="history-icon"><FileText size={16}/></div><div><b>{h.patient.name}</b><small>{h.analyzedAt}</small></div><div className="history-spacer"/><Severity value={h.status}/></div>)}</div>}
   </div>;
