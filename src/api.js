@@ -41,4 +41,9 @@ saveAnalysis: (analysis) =>
 
   getPatientAnalyses: (id) =>
     request(`/api/analyses/${encodeURIComponent(id)}`),
+  explainFindings: (findings) =>
+  request("/api/ai/explain", {
+    method: "POST",
+    body: JSON.stringify({ findings }),
+  }),
 };

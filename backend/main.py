@@ -6,6 +6,7 @@ from typing import Any
 import sqlite3
 import json
 from datetime import datetime, timezone
+from ai_service import explain_findings
 
 app = FastAPI(
     title="MediGuard AI API",
@@ -224,34 +225,6 @@ def save_analysis(analysis: dict[str, Any]):
         "saved_at": now
     }
 
-    patient = request.patient
-    result = request.result
-
-    patient_id = patient.get("id")
-
-    if not patient_id:
-        raise HTTPException(status_code=400, detail="Patient ID required")
-
-    now = datetime.now(timezone.utc).isoformat()
-
-    with get_db() as conn:
-        conn.execute("""
-            INSERT INTO analyses
-            (patient_id, result_data, created_at)
-            VALUES (?, ?, ?)
-        """, (
-            patient_id,
-            json.dumps(result),
-            now
-        ))
-
-    return {
-        "message": "Analysis saved successfully",
-        "patient_id": patient_id,
-        "saved_at": now
-    }
-
-
 @app.get("/api/analyses")
 def get_analyses():
     with get_db() as conn:
@@ -288,3 +261,35 @@ def get_patient_analyses(patient_id: str):
         }
         for row in rows
     ]
+    
+
+@app.post("/api/ai/explain")
+def explain_analysis(payload: dict[str, Any]):
+    findings = payload.get("findings")
+
+    if not isinstance(findings, list):
+        raise HTTPException(
+            status_code=400,
+            detail="A findings list is required."
+        )
+
+    try:
+        explanation = explain_findings(findings)
+
+        return {
+            "success": True,
+            "explanation": explanation
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+    except Exception as error:
+        print("GROQ ERROR:", repr(error))
+        raise HTTPException(
+            status_code=502,
+            detail="AI explanation service failed. Check backend terminal."
+        )
