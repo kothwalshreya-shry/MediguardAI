@@ -21,5 +21,18 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.7"
-  }
+  },
+  "description": "A React + Vite hackathon demonstration of explainable medication safety intelligence.",
+  "main": "postcss.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kothwalshreya-shry/MediguardAI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kothwalshreya-shry/MediguardAI/issues"
+  },
+  "homepage": "https://github.com/kothwalshreya-shry/MediguardAI#readme"
 }
