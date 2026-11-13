@@ -1,3 +1,4 @@
+import drugInteractionRules from "./knowledge-base/drug-interactions.json";
 export const demoPatients = [
   {
     id: "MG-2048", name: "Alex Morgan", age: 67, sex: "Female",
@@ -44,14 +45,7 @@ export const initialStats = {
 };
 
 export const safetyRules = [
-  {
-    id: "DDI-001", type: "Drug–drug interaction", severity: "High Risk",
-    drugs: ["warfarin", "ibuprofen"],
-    title: "Potential increased bleeding risk",
-    why: "The illustrative rule flags the combination of warfarin and an NSAID such as ibuprofen because it may increase bleeding risk.",
-    review: "A qualified clinician or pharmacist should review the combination, patient history and current treatment plan.",
-    source: "Illustrative demo rule · requires validation"
-  },
+  ...drugInteractionRules,
   {
     id: "ALG-001", type: "Drug–allergy conflict", severity: "High Risk",
     drugs: ["amoxicillin"], allergies: ["penicillin"],
