@@ -41,19 +41,34 @@ function Severity({ value }) {
 function Disclaimer() {
   return <div className="disclaimer"><Info size={15}/><span><b>Prototype disclaimer:</b> Demonstration decision-support only. Findings may be incomplete and are not medical advice. Always consult a qualified healthcare professional.</span></div>;
 }
+
+ 
 function StatCard({ icon: Icon, label, value, change, tone }) {
-  return <motion.div className="stat-card card" whileHover={{ y: -3 }} transition={{ duration: .2 }}>
-    <div className={`stat-icon ${tone}`}><Icon size={19}/></div>
-    <div className="stat-label">{label}</div><div className="stat-value">{value}</div>
-    <div className="stat-foot"><span className="tiny-trend">{change}</span><span>illustrative demo data</span></div>
-  </motion.div>;
+  return (
+    <motion.div
+      className="stat-card card"
+      whileHover={{ y: -3 }}
+      transition={{ duration: .2 }}
+    >
+      <div className={`stat-icon ${tone}`}><Icon size={19}/></div>
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-foot">
+        <span className="tiny-trend">{change}</span>
+        <span>from saved analyses</span>
+      </div>
+    </motion.div>
+  );
 }
+
+
 function SectionTitle({ eyebrow, title, subtitle, action }) {
   return <div className="section-title"><div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>;
 }
 
 export default function App() {
   const [page, setPage] = useState("overview");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [patient, setPatient] = useState(emptyPatient());
   const [result, setResult] = useState(null);
@@ -144,7 +159,9 @@ export default function App() {
     { day: "Mon", scans: 34 }, { day: "Tue", scans: 48 }, { day: "Wed", scans: 41 },
     { day: "Thu", scans: 63 }, { day: "Fri", scans: 54 }, { day: "Sat", scans: 72 }, { day: "Sun", scans: 61 }
   ];
-
+if (!isLoggedIn) {
+  return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+}
   return <div className="app-shell">
     <aside className={cx("sidebar", sidebarOpen && "sidebar-open")}>
       <div className="sidebar-top"><Logo/><button className="icon-btn mobile-close" onClick={() => setSidebarOpen(false)}><X size={18}/></button></div>
@@ -175,7 +192,9 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         <motion.div key={page} className="page-content" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: .2 }}>
-          {page === "overview" && <Dashboard go={go} loadScenario={loadScenario} history={history} stats={initialStats} pieData={pieData} chartData={chartData}/>}
+          {page === "overview" && (
+  <Dashboard go={go} loadScenario={loadScenario} history={history}/>
+)}
           {page === "analysis" && <AnalysisPage patient={patient} updateField={updateField} updateMedication={updateMedication} addMedication={addMedication} removeMedication={removeMedication} toggleListValue={toggleListValue} runAnalysis={runAnalysis} loadScenario={loadScenario}/>}
           {page === "explain" && <ExplainPage result={result} patient={patient} go={go}/>}
           {page === "reports" && <ReportsPage result={result} history={history} patient={patient}/>}
@@ -190,31 +209,222 @@ export default function App() {
   </div>;
 }
 
-function Dashboard({ go, loadScenario, history, stats, pieData, chartData }) {
-  return <div className="page-stack">
-    <div className="welcome-row"><div><div className="eyebrow">THURSDAY, NOVEMBER 12, 2026 <span className="live-dot"/></div><h1>Good afternoon, <span>MediGuard AI</span></h1><p>Here’s your medication safety intelligence at a glance.</p></div><button className="btn btn-primary" onClick={() => go("analysis")}><Plus size={17}/> New analysis</button></div>
-    <Disclaimer/>
-    <div className="stats-grid">
-      <StatCard icon={Users} label="Patients analyzed" value="1,284" change="+12.8%" tone="purple"/>
-      <StatCard icon={ClipboardList} label="Medication checks" value="3,862" change="+8.4%" tone="blue"/>
-      <StatCard icon={AlertCircle} label="High-risk alerts" value="18" change="Needs review" tone="red"/>
-      <StatCard icon={Activity} label="Moderate alerts" value="42" change="Across demo set" tone="orange"/>
-    </div>
-    <div className="dashboard-grid">
-      <div className="card chart-card"><div className="card-heading"><div><h3>Analysis activity</h3><p>Medication checks performed this week</p></div><Badge tone="purple">This week</Badge></div>
-        <div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData} margin={{ top: 12, right: 8, left: -20, bottom: 0 }}><defs><linearGradient id="scanFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8c83e8" stopOpacity={.25}/><stop offset="95%" stopColor="#8c83e8" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 5" vertical={false} stroke="#edf0f6"/><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "#8992a6", fontSize: 11 }}/><YAxis axisLine={false} tickLine={false} tick={{ fill: "#8992a6", fontSize: 11 }}/><Tooltip contentStyle={{ border: "1px solid #edf0f6", borderRadius: 12, boxShadow: "0 8px 24px #20264a12" }}/><Area type="monotone" dataKey="scans" stroke="#8178df" strokeWidth={2.5} fill="url(#scanFill)" activeDot={{ r: 5, fill: "#8178df" }}/></AreaChart></ResponsiveContainer></div>
+
+function Dashboard({ go, loadScenario, history }) {
+  const [savedAnalyses, setSavedAnalyses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setDashboardError("");
+
+        const data = await api.getAnalyses();
+
+        const rows = Array.isArray(data)
+          ? data
+          : data.analyses || data.items || [];
+
+        const analyses = rows
+          .map(row => row.analysis || row.result || row)
+          .filter(item => item && item.patient);
+
+        if (!cancelled) setSavedAnalyses(analyses);
+      } catch (error) {
+        console.error("Dashboard loading failed:", error);
+        if (!cancelled) setDashboardError(error.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const patients = new Set(
+    savedAnalyses.map(a => a.patient.id || a.patient.name)
+  );
+
+  const medicationCount = savedAnalyses.reduce(
+    (total, a) => total + (a.patient.medications?.length || 0), 0
+  );
+
+  const findings = savedAnalyses.flatMap(
+    a => Array.isArray(a.findings) ? a.findings : []
+  );
+
+  const highRisk = findings.filter(f => f.severity === "High Risk").length;
+  const moderate = findings.filter(f => f.severity === "Moderate").length;
+  const caution = findings.filter(f => f.severity === "Caution").length;
+  const noFinding = savedAnalyses.filter(
+    a => !a.findings || a.findings.length === 0
+  ).length;
+
+  const pieData = [
+    { name: "High risk", value: highRisk, color: "#ef6b79" },
+    { name: "Moderate", value: moderate, color: "#f3a65d" },
+    { name: "Caution", value: caution, color: "#e8c75e" },
+    { name: "No finding", value: noFinding, color: "#55b99a" }
+  ];
+
+  const totalFindings = findings.length;
+
+  return (
+    <div className="page-stack">
+      <div className="welcome-row">
+        <div>
+          <div className="eyebrow">MEDICATION SAFETY OVERVIEW <span className="live-dot"/></div>
+          <h1>Good afternoon, <span>MediGuard AI</span></h1>
+          <p>Here’s your medication safety intelligence at a glance.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => go("analysis")}>
+          <Plus size={17}/> New analysis
+        </button>
       </div>
-      <div className="card chart-card risk-card"><div className="card-heading"><div><h3>Risk distribution</h3><p>Illustrative alert breakdown</p></div><button className="more-btn" onClick={() => go("reports")}>View report <ArrowRight size={14}/></button></div>
-        <div className="risk-chart"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={pieData} dataKey="value" nameKey="name" innerRadius={54} outerRadius={76} paddingAngle={3} stroke="none">{pieData.map((d, i) => <Cell key={i} fill={d.color}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer><div className="donut-center"><b>284</b><small>findings</small></div></div>
-        <div className="legend-grid">{pieData.map(d => <div key={d.name}><span style={{ background: d.color }}/>{d.name}<b>{d.value}</b></div>)}</div>
+
+      <Disclaimer/>
+
+      {dashboardError && (
+        <div className="card">
+          Could not load dashboard data: {dashboardError}
+        </div>
+      )}
+
+      <div className="stats-grid">
+        <StatCard icon={Users} label="Patients analyzed"
+          value={loading ? "..." : patients.size}
+          change={`${savedAnalyses.length} saved analyses`} tone="purple"/>
+
+        <StatCard icon={ClipboardList} label="Medications reviewed"
+          value={loading ? "..." : medicationCount}
+          change="Across saved analyses" tone="blue"/>
+
+        <StatCard icon={AlertCircle} label="High-risk findings"
+          value={loading ? "..." : highRisk}
+          change="Requires professional review" tone="red"/>
+
+        <StatCard icon={Activity} label="Moderate findings"
+          value={loading ? "..." : moderate}
+          change="Across saved analyses" tone="orange"/>
       </div>
+
+      <div className="dashboard-grid">
+        <div className="card chart-card">
+          <div className="card-heading">
+            <div>
+              <h3>Analysis activity</h3>
+              <p>Saved analyses in your workspace</p>
+            </div>
+            <Badge tone="purple">Live data</Badge>
+          </div>
+          <div className="chart-wrap" style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <div style={{textAlign:"center"}}>
+              <h2>{loading ? "..." : savedAnalyses.length}</h2>
+              <p>Total saved analyses</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card chart-card risk-card">
+          <div className="card-heading">
+            <div>
+              <h3>Risk distribution</h3>
+              <p>Based on saved findings</p>
+            </div>
+            <button className="more-btn" onClick={() => go("reports")}>
+              View report <ArrowRight size={14}/>
+            </button>
+          </div>
+
+          <div className="risk-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name"
+                  innerRadius={54} outerRadius={76} paddingAngle={3}
+                  stroke="none">
+                  {pieData.map((d, i) => (
+                    <Cell key={i} fill={d.color}/>
+                  ))}
+                </Pie>
+                <Tooltip/>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="donut-center">
+              <b>{loading ? "..." : totalFindings}</b>
+              <small>findings</small>
+            </div>
+          </div>
+
+          <div className="legend-grid">
+            {pieData.map(d => (
+              <div key={d.name}>
+                <span style={{background:d.color}}/>
+                {d.name}
+                <b>{d.value}</b>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="card recent-card">
+        <div className="card-heading">
+          <div>
+            <h3>Try a demo patient</h3>
+            <p>Load a fictional profile to explore the safety engine.</p>
+          </div>
+          <Badge tone="green">3 scenarios</Badge>
+        </div>
+        <div className="scenario-grid">
+          {demoPatients.map((p, i) => (
+            <button className="scenario-card" key={p.id}
+              onClick={() => loadScenario(p)}>
+              <div className={`scenario-avatar avatar-${i}`}>
+                {p.name.split(" ").map(x => x[0]).join("")}
+              </div>
+              <div className="scenario-content">
+                <b>{p.name}</b>
+                <small>{p.scenario}</small>
+                <span>{p.medications.length} medications <ArrowRight size={13}/></span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {history.length > 0 && (
+        <div className="card recent-card">
+          <div className="card-heading">
+            <div>
+              <h3>Recent analyses</h3>
+              <p>Your latest local demo sessions.</p>
+            </div>
+          </div>
+          {history.slice(0, 3).map((h, i) => (
+            <div className="history-row" key={i}>
+              <div className="history-icon"><FileText size={17}/></div>
+              <div>
+                <b>{h.patient.name}</b>
+                <small>{h.analyzedAt}</small>
+              </div>
+              <div className="history-spacer"/>
+              <Severity value={h.status}/>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-    <div className="card recent-card"><div className="card-heading"><div><h3>Try a demo patient</h3><p>Load a fictional profile to explore the safety engine.</p></div><Badge tone="green">3 scenarios</Badge></div>
-      <div className="scenario-grid">{demoPatients.map((p, i) => <button className="scenario-card" key={p.id} onClick={() => loadScenario(p)}><div className={`scenario-avatar avatar-${i}`}>{p.name.split(" ").map(x => x[0]).join("")}</div><div className="scenario-content"><b>{p.name}</b><small>{p.scenario}</small><span>{p.medications.length} medications <ArrowRight size={13}/></span></div></button>)}</div>
-    </div>
-    {history.length > 0 && <div className="card recent-card"><div className="card-heading"><div><h3>Recent analyses</h3><p>Your latest local demo sessions.</p></div></div>{history.slice(0, 3).map((h, i) => <div className="history-row" key={i}><div className="history-icon"><FileText size={17}/></div><div><b>{h.patient.name}</b><small>{h.analyzedAt}</small></div><div className="history-spacer"/><Severity value={h.status}/></div>)}</div>}
-  </div>;
+  );
 }
+
 
 function AnalysisPage({ patient, updateField, updateMedication, addMedication, removeMedication, toggleListValue, runAnalysis, loadScenario }) {
   const conditions = ["Diabetes", "Hypertension", "Atrial fibrillation", "Chronic kidney disease", "Asthma", "Migraine"];
@@ -236,14 +446,13 @@ function AnalysisPage({ patient, updateField, updateMedication, addMedication, r
         <div className="analysis-actions"><span><i>*</i> Required fields</span><button className="btn btn-primary btn-large" onClick={runAnalysis}><Sparkles size={17}/> Analyze medication safety <ArrowRight size={16}/></button></div>
       </div>
       <aside className="analysis-aside">
-        <div className="card aside-card"><div className="aside-icon"><ShieldCheck size={20}/></div><h3>Five independent checks</h3><p>Each category is evaluated using a separate set of demonstration rules.</p>{["Drug–drug interactions","Drug–disease conflicts","Drug–allergy conflicts","Duplicate therapy","Dosage checks"].map((x,i)=><div className="check-row" key={x}><span className="check-number">{String(i+1).padStart(2,"0")}</span>{x}<CheckCircle2 size={15}/></div>)}</div>
+        <div className="card aside-card"><div className="aside-icon"><ShieldCheck size={20}/></div><h3>Five independent checks</h3><p>Each category is evaluated using a separate set of demonstration rules.</p>{["DrugΓÇôdrug interactions","DrugΓÇôdisease conflicts","DrugΓÇôallergy conflicts","Duplicate therapy","Dosage checks"].map((x,i)=><div className="check-row" key={x}><span className="check-number">{String(i+1).padStart(2,"0")}</span>{x}<CheckCircle2 size={15}/></div>)}</div>
         <div className="card aside-card tint-card"><div className="aside-icon purple"><BrainCircuit size={20}/></div><h3>Explainable by design</h3><p>Every matching rule includes a reason, severity, and a professional review suggestion.</p><div className="mini-flow"><span>Patient context</span><ArrowRight size={13}/><span>Safety rules</span><ArrowRight size={13}/><span>Review alerts</span></div></div>
         <div className="card aside-card"><h3>Quick-load a scenario</h3><p>Use a preloaded fictional patient to test the prototype.</p>{demoPatients.map((p,i)=><button className="quick-scenario" key={p.id} onClick={() => loadScenario(p)}><span className={`avatar avatar-${i}`}>{p.name.split(" ").map(x=>x[0]).join("")}</span><span><b>{p.name}</b><small>{p.scenario}</small></span><ChevronRight size={15}/></button>)}</div>
       </aside>
     </div>
   </div>;
 }
-
 function ExplainPage({ result, patient, go }) {
   if (!result) return <div className="empty-state card"><div className="empty-icon"><Network size={28}/></div><h2>No analysis to explain yet</h2><p>Start a patient analysis to see the explainable findings and patient context graph.</p><button className="btn btn-primary" onClick={() => go("analysis")}>Start an analysis <ArrowRight size={15}/></button></div>;
   const findings = result.findings;
@@ -361,4 +570,250 @@ function ArchitecturePage() {
     <div className="card stack-card"><h3>Proposed technology stack</h3><div className="stack-pills">{["React.js","Vite","Tailwind CSS","JavaScript","FastAPI / Flask (future backend)","PostgreSQL / MongoDB (future storage)","Docker (deployment option)","REST APIs"].map(x=><span key={x}>{x}</span>)}</div><p>The hackathon prototype runs locally with browser-side mock data and a deterministic JavaScript safety engine.</p></div>
     <div className="card future-card"><div className="future-icon"><Info size={19}/></div><div><b>Prototype scope & next steps</b><p>The current demo uses a small illustrative rule set. A production-oriented implementation would require curated and licensed medical references, clinical review, robust patient-data security, validation, audit trails and appropriate regulatory assessment.</p></div></div>
   </div>;
+}
+
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
+    setError("");
+    onLogin();
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      background: "#f7f7ff",
+      fontFamily: "inherit"
+    }}>
+      <div style={{
+        background: "linear-gradient(145deg, #5146c8, #8275ed)",
+        color: "white",
+        padding: "65px 9%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between"
+      }}>
+        <div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            fontSize: 25,
+            fontWeight: 800
+          }}>
+            <ShieldCheck size={34} />
+            MediGuard AI
+          </div>
+
+          <div style={{ marginTop: 110, maxWidth: 480 }}>
+            <div style={{
+              textTransform: "uppercase",
+              letterSpacing: 3,
+              fontSize: 12,
+              opacity: 0.8
+            }}>
+              Smarter medication safety
+            </div>
+
+            <h1 style={{
+              fontSize: "clamp(36px, 4vw, 55px)",
+              lineHeight: 1.15,
+              margin: "22px 0"
+            }}>
+              Every medication decision deserves clarity.
+            </h1>
+
+            <p style={{
+              fontSize: 17,
+              lineHeight: 1.8,
+              opacity: 0.85
+            }}>
+              Explore medication safety insights, understand potential
+              conflicts and review explainable findings in one workspace.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 13, opacity: 0.75 }}>
+          © 2026 MediGuard AI · INNOVASIA 2K26
+        </div>
+      </div>
+
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 30
+      }}>
+        <form onSubmit={handleSubmit} style={{
+          width: "100%",
+          maxWidth: 420,
+          background: "white",
+          padding: "45px 38px",
+          borderRadius: 22,
+          boxShadow: "0 15px 50px rgba(55,45,120,0.08)"
+        }}>
+          <div style={{
+            width: 54,
+            height: 54,
+            borderRadius: 16,
+            background: "#efedff",
+            color: "#7165df",
+            display: "grid",
+            placeItems: "center"
+          }}>
+            <ShieldCheck size={28} />
+          </div>
+
+          <h2 style={{
+            fontSize: 29,
+            color: "#24243b",
+            margin: "25px 0 8px"
+          }}>
+            Welcome back
+          </h2>
+
+          <p style={{
+            color: "#88889d",
+            fontSize: 14,
+            marginBottom: 30
+          }}>
+            Sign in to access your MediGuard workspace.
+          </p>
+
+          <label style={{
+            display: "block",
+            fontSize: 13,
+            fontWeight: 600,
+            marginBottom: 9,
+            color: "#45445c"
+          }}>
+            Email address
+          </label>
+
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: 15,
+              border: "1px solid #e5e4ef",
+              borderRadius: 10,
+              marginBottom: 22,
+              outlineColor: "#796ce4",
+              fontSize: 14
+            }}
+          />
+
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 9
+          }}>
+            <label style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#45445c"
+            }}>
+              Password
+            </label>
+            <span style={{
+              fontSize: 12,
+              color: "#796ce4"
+            }}>
+              Demo access
+            </span>
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: 15,
+                paddingRight: 75,
+                border: "1px solid #e5e4ef",
+                borderRadius: 10,
+                marginBottom: 15,
+                outlineColor: "#796ce4",
+                fontSize: 14
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: 13,
+                border: 0,
+                background: "transparent",
+                color: "#796ce4",
+                cursor: "pointer",
+                fontSize: 12
+              }}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {error && (
+            <p style={{ color: "#d7475b", fontSize: 13 }}>
+              {error}
+            </p>
+          )}
+
+          <button type="submit" style={{
+            width: "100%",
+            padding: 16,
+            border: 0,
+            borderRadius: 11,
+            background: "linear-gradient(100deg, #695bd8, #8978ed)",
+            color: "white",
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: "pointer",
+            marginTop: 12,
+            boxShadow: "0 7px 18px rgba(105,91,216,0.22)"
+          }}>
+            Sign in to MediGuard AI →
+          </button>
+
+          <p style={{
+            textAlign: "center",
+            color: "#9998aa",
+            fontSize: 11,
+            lineHeight: 1.7,
+            marginTop: 25
+          }}>
+            Hackathon demonstration login. No real account
+            authentication is configured yet.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
 }
