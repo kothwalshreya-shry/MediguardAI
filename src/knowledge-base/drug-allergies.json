@@ -1,0 +1,18 @@
+
+[
+  {
+    "id": "ALG-001",
+    "type": "Drug–allergy conflict",
+    "severity": "High Risk",
+    "drugs": [
+      "amoxicillin"
+    ],
+    "allergies": [
+      "penicillin"
+    ],
+    "title": "Potential serious allergic reaction",
+    "why": "Amoxicillin is a penicillin-class antibiotic. Its prescribing information contraindicates use in patients with a history of serious hypersensitivity reactions to penicillins or other beta-lactam antibiotics. Such reactions can include anaphylaxis.",
+    "review": "A qualified clinician or pharmacist should review the allergy history and medication before use. Do not treat an unverified allergy label or a non-allergic side effect as confirmed serious hypersensitivity.",
+    "source": "US FDA/DailyMed, Amoxicillin Prescribing Information, Section 4 (Contraindications) and Section 5.1 (Anaphylactic Reactions): https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=ad804b34-169c-44bf-a469-f1149433d96b"
+  }
+]

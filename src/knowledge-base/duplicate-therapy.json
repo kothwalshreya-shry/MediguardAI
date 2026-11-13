@@ -1,0 +1,16 @@
+
+[
+  {
+    "id": "DUP-001",
+    "type": "Duplicate therapy",
+    "severity": "Moderate",
+    "drugs": [
+      "ibuprofen",
+      "naproxen"
+    ],
+    "title": "Potential duplicate NSAID therapy",
+    "why": "Ibuprofen and naproxen are both non-steroidal anti-inflammatory drugs (NSAIDs). Taking them together can increase the risk of adverse effects, including stomach ulcers and gastrointestinal bleeding. FDA prescribing information advises avoiding the use of more than one NSAID at a time.",
+    "review": "A qualified clinician or pharmacist should review the combination. Do not assume the combination is intentional or safe without checking the prescription and patient context.",
+    "source": "NHS, Ibuprofen for adults: https://www.nhs.uk/medicines/ibuprofen-for-adults/ ; NHS, Naproxen: https://www.nhs.uk/medicines/naproxen/ ; US FDA, Naproxen Prescribing Information, Warnings and Precautions: https://www.accessdata.fda.gov/drugsatfda_docs/label/2019/020353s036lbl.pdf"
+  }
+]
