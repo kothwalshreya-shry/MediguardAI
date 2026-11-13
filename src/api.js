@@ -29,11 +29,13 @@ export const api = {
 
   getPatients: () => request("/api/patients"),
 
-  saveAnalysis: (patient, result) =>
-    request("/api/analyses", {
-      method: "POST",
-      body: JSON.stringify({ patient, result }),
-    }),
+  
+saveAnalysis: (analysis) =>
+  request("/api/analyses", {
+    method: "POST",
+    body: JSON.stringify(analysis),
+  }),
+
 
   getAnalyses: () => request("/api/analyses"),
 

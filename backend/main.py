@@ -153,8 +153,77 @@ def get_patient(patient_id: str):
     }
 
 
+
 @app.post("/api/analyses")
-def save_analysis(request: AnalysisRequest):
+def save_analysis(analysis: dict[str, Any]):
+    patient = analysis.get("patient")
+
+    if not isinstance(patient, dict):
+        raise HTTPException(status_code=400, detail="Patient details are required")
+
+    patient_id = patient.get("id")
+    name = patient.get("name")
+
+    if not patient_id or not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Patient ID and name are required"
+        )
+
+    findings = analysis.get("findings")
+
+    if not isinstance(findings, list):
+        raise HTTPException(
+            status_code=400,
+            detail="Findings must be a list"
+        )
+
+    if not analysis.get("status"):
+        raise HTTPException(
+            status_code=400,
+            detail="Analysis status is required"
+        )
+
+    now = datetime.now(timezone.utc).isoformat()
+    created_at = analysis.get("analyzedAt") or now
+
+    with get_db() as conn:
+        # Save or update patient details
+        conn.execute("""
+            INSERT INTO patients
+            (id, name, age, patient_data, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                age = excluded.age,
+                patient_data = excluded.patient_data
+        """, (
+            patient_id,
+            name,
+            patient.get("age"),
+            json.dumps(patient),
+            now
+        ))
+
+        # Save the complete AI analysis without changing its structure
+        conn.execute("""
+            INSERT INTO analyses
+            (patient_id, result_data, created_at)
+            VALUES (?, ?, ?)
+        """, (
+            patient_id,
+            json.dumps(analysis),
+            created_at
+        ))
+
+    return {
+        "message": "Analysis saved successfully",
+        "patient_id": patient_id,
+        "findings_count": len(findings),
+        "status": analysis["status"],
+        "saved_at": now
+    }
+
     patient = request.patient
     result = request.result
 
