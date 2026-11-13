@@ -1,0 +1,16 @@
+
+[
+  {
+    "id": "DDI-001",
+    "type": "Drug–drug interaction",
+    "severity": "Caution",
+    "drugs": [
+      "warfarin",
+      "ibuprofen"
+    ],
+    "title": "Potential increased bleeding risk",
+    "why": "Concomitant use of ibuprofen and warfarin can increase the risk of serious bleeding compared with either medicine alone.",
+    "review": "A qualified clinician or pharmacist should review this combination before use. Monitor for signs of bleeding as clinically appropriate.",
+    "source": "US FDA/DailyMed Warfarin Sodium Prescribing Information, section 7.3, Drugs that Increase Bleeding Risk: https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=51e98fb6-ba76-497e-95d8-fe895ef0b7ed ; NHS Warfarin medicine guidance: https://www.nhs.uk/medicines/warfarin/"
+  }
+]
