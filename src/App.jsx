@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { api } from "./api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, AlertCircle, AlertTriangle, ArrowRight, Bell, BookOpen, Check,
@@ -79,14 +80,49 @@ export default function App() {
     updateField(key, current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
   };
   const runAnalysis = () => {
-    if (!patient.name.trim() || !patient.age || Number(patient.age) < 1 || Number(patient.age) > 120) {
-      notify("Enter a patient name and a valid age (1–120)."); return;
-    }
-    if (!patient.medications.some(m => m.name.trim())) { notify("Add at least one medication."); return; }
-    const clean = { ...patient, age: Number(patient.age), medications: patient.medications.filter(m => m.name.trim()) };
-    const next = analyzePatient(clean);
-    setPatient(clean); setResult(next); setHistory(h => [next, ...h].slice(0, 8)); setPage("explain");
-    notify("Medication safety analysis completed");
+    
+const runAnalysis = async () => {
+  if (
+    !patient.name.trim() ||
+    !patient.age ||
+    Number(patient.age) < 1 ||
+    Number(patient.age) > 120
+  ) {
+    notify("Enter a patient name and a valid age (1–120).");
+    return;
+  }
+
+  if (!patient.medications.some(m => m.name.trim())) {
+    notify("Add at least one medication.");
+    return;
+  }
+
+  const clean = {
+    ...patient,
+    age: Number(patient.age),
+    medications: patient.medications.filter(m => m.name.trim())
+  };
+
+  // Keep the existing safety engine unchanged
+  const next = analyzePatient(clean);
+
+  // Update the frontend immediately
+  setPatient(clean);
+  setResult(next);
+  setHistory(h => [next, ...h].slice(0, 8));
+  setPage("explain");
+
+  // Save patient and analysis to the backend
+  try {
+    await api.savePatient(clean);
+    await api.saveAnalysis(clean, next);
+
+    notify("Analysis completed and saved successfully!");
+  } catch (error) {
+    console.error("Backend save failed:", error);
+    notify("Analysis completed locally, but backend saving failed: " + error.message);
+  }
+};
   };
   const startDemo = () => {
     setShowDemo(true); setDemoStep(0);
@@ -247,6 +283,44 @@ function ContextGraph({ patient }) {
 
 function ReportsPage({ result, history, patient }) {
   const active = result;
+  const [savedReports, setSavedReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [reportsError, setReportsError] = useState("");
+  useEffect(() => {
+  let cancelled = false;
+
+  const loadReports = async () => {
+    try {
+      setLoadingReports(true);
+      setReportsError("");
+
+      const data = await api.getAnalyses();
+
+      console.log("Backend reports:", data);
+
+      if (!cancelled) {
+        setSavedReports(
+          Array.isArray(data)
+            ? data
+            : data.analyses || data.items || []
+        );
+      }
+    } catch (error) {
+      if (!cancelled) {
+        console.error("Could not load reports:", error);
+        setReportsError(error.message);
+      }
+    } finally {
+      if (!cancelled) setLoadingReports(false);
+    }
+  };
+
+  loadReports();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
   const printReport = () => window.print();
   return <div className="page-stack">
     <SectionTitle eyebrow="DOCUMENT CENTER" title="Safety reports" subtitle="Review and print the latest medication safety report." action={<button className="btn btn-primary" onClick={printReport} disabled={!active}><Download size={16}/> Print / Save PDF</button>}/>
